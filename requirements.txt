@@ -1,0 +1,5 @@
+flask
+pyowm
+pytils
+requests_cache
+pyweatherbit
