@@ -7,8 +7,8 @@ import requests_cache
 
 app = Flask(__name__)
 
-request_cache_enable = True
-request_cache_timeout = 60
+request_cache_enable = True # глобальные параметры вместо параметров класса
+request_cache_timeout = 60  # или параметров в конфиге
 
 # class weathere:
 title = "WeaThere"
@@ -16,7 +16,7 @@ title = "WeaThere"
 class weathere:
 
     def webpage(self, city=None):
-        if request.method == 'POST':
+        if request.method == 'POST':    # условная логика, от которой зависит поведение всей программы: вывод формы, или вывод результатов
             city = request.form['city']
             return redirect("/today/" + pytils.translit.translify(city))
         elif city == None:
@@ -25,16 +25,16 @@ class weathere:
                                                   "<b>Where do you wanna go today?</b>" \
                                                   "<br/><form method=\"post\" action=/today/>" \
                                                   "<input type=\"text\" name=\'city\'/><input type=\"submit\" />" \
-                                                  "</form></html>")
-        owm = pyowm.OWM('10f88ff6b5048020b0403138b9d95e13')
-        try:
+                                                  "</form></html>") # не разделяются логика и представление
+        owm = pyowm.OWM('10f88ff6b5048020b0403138b9d95e13') # параметры вне конфигурации
+        try:    # код, получающий погоду от сервиса -> нужно вынести отдельно
             observation = owm.weather_at_place(pytils.translit.translify(city) + ",ru")
             w = observation.get_weather()
             owm_temp = w.get_temperature('celsius')["temp"]
         except:
             owm_temp = False
-        from weatherbit.api import Api
-        api_key = "92cef175208d46c49c057bd15d7a15db"
+        from weatherbit.api import Api # код, получающий погоду от сервиса -> нужно вынести отдельно
+        api_key = "92cef175208d46c49c057bd15d7a15db"  # параметры вне файла конфигурации
         api = Api(api_key)
         api.set_forecast_granularity('hourly')
         try:
@@ -42,8 +42,8 @@ class weathere:
             bit_temp = forecast.json["data"][0]["temp"]
         except:
             bit_temp = False
-        if (bit_temp != False and owm_temp != False):
-            avg_temp = sum(([owm_temp, bit_temp])) / (2)
+        if (bit_temp != False and owm_temp != False):  # код вычисления среднего значения - нужно вынести отдельно
+            avg_temp = sum(([owm_temp, bit_temp])) / (2) # + сделать независимым от количества аргументов
         elif bit_temp != False:
             avg_temp = bit_temp
         elif owm_temp != False:
@@ -56,18 +56,18 @@ class weathere:
                "<h2>" + pytils.translit.translify(city) + "</h2>" \
                "<h3>OWM: " + str(owm_temp) + "</h3>" \
                "<h3>WeatherBit: " + str(bit_temp) + "</h3>" \
-               "<div><a href=\"/\">На главную</a>"
+               "<div><a href=\"/\">На главную</a>" # не разделяются логика и представление
         return html
 
 
     def __init__(self):
-        if request_cache_enable:
+        if request_cache_enable:    # дублируется включение кэширование вывода, выполненное при старте
             requests_cache.install_cache(cache_name='weather_cache', backend='sqlite',
                                          expire_after=request_cache_timeout,
                                          allowable_codes=(200, 404, 401))
 
 
-    def log(self, **data):
+    def log(self, **data): # дублируется функция, используемая не только в этом классе - нужно вынести
         msg = ''
         for key, value in data.items():
             msg += ("{}: {}; ".format(key, value))
@@ -89,7 +89,7 @@ def log(**data):
         print(msg)
 
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=80)
+    app.run(host="0.0.0.0", port=80) # параметры вне файла конфигурации
     if request_cache_enable:
         requests_cache.install_cache(cache_name='weather_cache', backend='sqlite',
                                      expire_after=request_cache_timeout,
